@@ -29,6 +29,7 @@ Line::Line(const Line & rhs)
 }
 
 
+
 ///
 ///Operator = construct
 ///
@@ -53,63 +54,26 @@ void Line::copy(const Line & rhs)
 	delete[] this->line;
 	if (!rhs.line) throw std::exception("Bad alloc");
 	this->line = new char[strlen(rhs.line) + 1];
-	//Maybe error
-	strcpy_s(this->line,strlen(rhs.line)+1, rhs.line);
+		strcpy_s(this->line,strlen(rhs.line)+1, rhs.line);
 
 };
 
 
 
-///
-///Read how many letter have line
-///
-void Line::readCountOfLine(std::ifstream & file)
-{
-	char character = 'n';
-	//reading characters
-	while (!file.eof())
-	{
-		file.get(character);
-		if (file.eof())break;
-		if (!file) 
-		{
-			//TO DO: FILE CLOSE CLEAR
-			throw std::exception("Error open file");
-		}
-		if ('\n' == character)
-			break;
-		++lettersCount;
-	}
-	setLine();
-}
 
 
 ///
 ///setLine function.
 ///
-void Line::setLine()
+void Line::setLine(const char* line)
 {
 	delete[] this->line;
+	this->lettersCount=strlen(line);
 	this->line = new(std::nothrow) char[lettersCount + 1];
-	if (!line)throw std::exception("Bad alloc");
-}
-
-
-///
-///Read all letters in current line
-///
-void Line::readLetters(std::ifstream & file)
-{
-	char ch = ' ';
-	for (unsigned i = 0; i < this->lettersCount; i++)
+	if (!this->line)throw std::exception("Bad alloc");
+	for (unsigned i = 0; i < lettersCount; i++)
 	{
-		file.get(ch);
-		if (ch == '\n')
-		{
-			file.get(ch);
-		}
-		this->line[i] = ch;
-		if (!file)throw std::exception("Error with file");;
+		this->line[i] = line[i];
 	}
 	this->line[lettersCount] = '\0';
 }
@@ -120,28 +84,180 @@ void Line::readLetters(std::ifstream & file)
 ///
 void Line::header()
 {
-		this->lettersCount += 1;
-	char * temporary = new (std::nothrow) char[this->lettersCount + 1];
+	this->lettersCount += 2;
+	char * temporary = new (std::nothrow) char[this->lettersCount+1];
 
 	if (!temporary)
 	{
 		throw std::exception("Bad alloc");
 	}
-	
 	temporary[0] = '#';
+	temporary[1] = ' ';
 	temporary += 1;
-	strcpy_s(temporary, lettersCount, line);
+	strcpy_s(temporary, this->lettersCount, line);
 	temporary -= 1;
-
 	temporary[this->lettersCount] = '\0';
-
-	setLine();
-	strcpy_s(line, lettersCount+1, temporary);
-	line[this->lettersCount] = '\0';
-	
+	setLine(temporary);
 	delete[] temporary;
 }
 
 
+////
+///function to make text bold
+///
+void Line::bold(unsigned from, unsigned to,unsigned count)
+{
+	unsigned numberOfSymbolsToAdd = countToAdd(from, to, count);
+	this->lettersCount += numberOfSymbolsToAdd;
+	char * temporary = new (std::nothrow) char[this->lettersCount + 1];
+	unsigned wordCurrent = 1;
+	unsigned i = 0;
+	unsigned j = 0;
+	checkAndAddSymbols(temporary, i, j, from, to, wordCurrent, 1, numberOfSymbolsToAdd);
+}
+
+
+///
+///make italic
+///TO DO CHECK TEMPORARY
+void Line::italic(unsigned from, unsigned to, unsigned count)
+{
+	unsigned numberOfSymbolsToAdd = countToAdd(from, to, count);
+	this->lettersCount += numberOfSymbolsToAdd;
+	char * temporary = new (std::nothrow) char[this->lettersCount + 1];
+	unsigned wordCurrent = 1;
+	unsigned i = 0;
+	unsigned j = 0;
+	//function to add symbols into file
+	checkAndAddSymbols(temporary, i, j, from, to, wordCurrent, 2, numberOfSymbolsToAdd);
+	//add another symbols
+	
+}
+
+
+
+///Make combine of two
+// to do errror from to
+void Line::combine(unsigned from, unsigned to, unsigned count)
+{
+	italic(from, to, count-4);
+	bold(from, to,count-2);
+}
+
+
+
+///
+///Helper function ot add symbols to file
+///
+void Line::checkAndAddSymbols(char* temporary, unsigned &i, unsigned &j, unsigned from,unsigned to,unsigned wordCurrent, unsigned countTimes, unsigned numberOfSymbolsToAdd)
+{
+	if (line[0]=='#')
+	{
+		temporary[i++] = line[j++];
+		temporary[i++] = ' ';
+	}
+	while (from <= to)
+	{
+
+		if (from == wordCurrent)
+		{
+			int times = 0;
+			do
+			{
+				temporary[i++] = '*';
+				times++;
+			} while (times==countTimes);
+			times = 0;
+
+			from += 1;
+			wordCurrent += 1;
+			while (line[j] != ' ' && j < lettersCount - numberOfSymbolsToAdd)
+			{
+				temporary[i++] = line[j++];
+			}
+			do
+			{
+				temporary[i++] = '*';
+				times++;
+			} while (times == countTimes);
+
+			if (from > to)
+			{
+				break;
+			}
+			temporary[i++] = line[j++];
+		}
+		else
+		{
+			if (line[j] == ' ')
+			{
+				wordCurrent += 1;
+				while (line[j] == ' ')
+				{
+					temporary[i++] = line[j++];
+				}
+			}
+			else
+			{
+				temporary[i++] = line[j++];
+			}
+
+		}
+
+	}
+	for (unsigned countOfLine = j, countOfTemp = i; countOfLine <(this->lettersCount - numberOfSymbolsToAdd); ++countOfLine)
+	{
+		temporary[countOfTemp++] = line[countOfLine];
+	}	
+	temporary[lettersCount] = '\0';
+	setLine(temporary);
+
+	delete[] temporary;
+}
+
+
+
+///
+///Function used to count for symbols to add
+///
+unsigned Line::countToAdd(unsigned from, unsigned to, unsigned count)
+{
+	int currentLetters = 0;
+	int countOfSymbolsToAdd = 0;
+	int wordCurrent = 1;
+	while (from <= to)
+	{
+		if (from == wordCurrent)
+		{
+			if (line[currentLetters] != '*' && line[currentLetters+1] !='*' && line[currentLetters+2] != '*')
+			{
+				countOfSymbolsToAdd += count;
+				wordCurrent += 1;
+				from += 1;
+			}
+
+			while (line[currentLetters] != ' ' && currentLetters<lettersCount)
+			{
+				currentLetters++;
+			}
+			currentLetters += 1;
+		}
+		else
+		{
+			currentLetters += 1;
+			while (line[currentLetters] != ' ' && currentLetters<lettersCount)
+			{
+				currentLetters++;
+			}
+			wordCurrent += 1;
+		}
+	}
+	return countOfSymbolsToAdd;
+}
+
+
+///
+///Function to add italic and bold
+///
 
 
