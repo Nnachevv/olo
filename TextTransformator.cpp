@@ -76,8 +76,6 @@ void TextTransformator::openFile(const char filePath[255])
 
 
 
-
-
 ///
 ///Reset file position.
 ///
@@ -91,13 +89,59 @@ void TextTransformator::fileReset()
 ///
 ///Close file
 ///
-void TextTransformator::fileClose()
+void TextTransformator::fileClose(std::fstream& file)
 {
 	file.clear();
 	file.close();
 }
 
 
+
+///
+///Saving to file  helper function
+///TO DO erorr handling
+void TextTransformator::saveFile(std::fstream & file)
+{
+	if (!file)std::cout << "Cannot open file";
+	for (unsigned i = 0; i < numberOfLines; i++)
+	{
+		file << lines[i].getLine();
+		file << '\n';
+	}
+	fileClose(file);
+}
+
+
+///
+///Saving to txt file to save changes
+///To DO FILE CATCH ERRORS;TO DO WITH One functions
+void TextTransformator::saveToTxtFile()
+{
+	std::fstream fileSaver;
+	fileSaver.open(filePath, std::ios::out);
+	saveFile(fileSaver);
+}
+
+
+///
+///Save to mb file
+///to do error
+void TextTransformator::saveToMbFile()
+{
+	char path[255];
+	int lenghtOfTxtFile = strlen(filePath);
+	for (int i = 0; i < lenghtOfTxtFile - 3; i++)
+	{
+		path[i] = filePath[i];
+	}
+	path[lenghtOfTxtFile - 3] = 'm';
+	path[lenghtOfTxtFile - 2] = 'd';
+	path[lenghtOfTxtFile - 1] = '\0';
+	//to do check errors
+	std::fstream mbFile;
+	mbFile.open(path, std::ios::out);
+	saveFile(mbFile);
+}
 
 ///
 ///Set number of lines in file.
@@ -146,14 +190,13 @@ void TextTransformator::readLine(unsigned numberOfLines)
 {
 	for (unsigned i = 0; i < numberOfLines; i++)
 	{
-		int lettersCount = 0;
+		
 		char buffer[1024];
-		char character = 'n';
 		//reading characters
 		file.getline(buffer,1024);
 		if (!file)
 		{
-			fileClose();
+			fileClose(file);
 			throw std::exception("Error open file");
 		}
 		if (!file.eof())
@@ -162,25 +205,6 @@ void TextTransformator::readLine(unsigned numberOfLines)
 		}
 		
 	}
-}
-
-
-
-///
-///Saving to txt file to save changes
-///To DO FILE CATCH ERRORS;
-void TextTransformator::saveToTxtFile()
-{
-	std::ofstream saveFile;
-	saveFile.open(filePath, std::ios::out);
-	for (unsigned i = 0; i < numberOfLines; i++)
-	{
-		saveFile << lines[i].getLine();
-		saveFile << '\n';
-	}
-	saveFile.clear();
-	saveFile.close();
-
 }
 
 
@@ -239,6 +263,9 @@ void TextTransformator::makeBold(unsigned row, unsigned from, unsigned to)
 
 }
 
+
+///
+///Make words italic
 void TextTransformator::makeItalic(unsigned row, unsigned from, unsigned to)
 {
 	row -= 1;;
@@ -246,6 +273,10 @@ void TextTransformator::makeItalic(unsigned row, unsigned from, unsigned to)
 	saveToTxtFile();
 }
 
+
+///
+///Make words combination of bold and itallic
+///
 void TextTransformator::makeCombine(unsigned row, unsigned from, unsigned to)
 {
 	row -= 1;;

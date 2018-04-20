@@ -136,8 +136,9 @@ void Line::italic(unsigned from, unsigned to, unsigned count)
 
 
 
-///Make combine of two
-// to do errror from to
+///
+///Function to add italic and bold
+///
 void Line::combine(unsigned from, unsigned to, unsigned count)
 {
 	italic(from, to, count-4);
@@ -256,8 +257,5 @@ unsigned Line::countToAdd(unsigned from, unsigned to, unsigned count)
 }
 
 
-///
-///Function to add italic and bold
-///
 
 
