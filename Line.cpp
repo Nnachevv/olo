@@ -142,38 +142,50 @@ void Line::italic(unsigned from, unsigned to, unsigned count)
 ///
 void Line::combine(unsigned from, unsigned to, unsigned count)
 {
-	italic(from, to, count-4);
-	bold(from, to,count-2);
+	italic(from, to, 2);
+	bold(from, to,4);
 }
 
 
 //To do bold
 int Line::checkHowMuchSymbolsToAdd(unsigned currentLetters, unsigned countToAdd, char * line)
 {
-	int numberTimesSeen = 0;
-	++numberTimesSeen;
-	while (line[++currentLetters] == '*')
+	if (line[currentLetters] == '*')
 	{
+
+		int numberTimesSeen = 0;
 		++numberTimesSeen;
+		while (line[++currentLetters] == '*')
+		{
+			++numberTimesSeen;
+		}
+		if ((countToAdd == 2) && numberTimesSeen == 2)
+		{
+			return 2;
+		}
+		else if ((countToAdd == 2) && numberTimesSeen == 1)
+		{
+			return 0;
+		}
+		else if ((countToAdd == 4) && numberTimesSeen == 2)
+		{
+			return 0;
+		}
+		else if ((countToAdd == 4) && numberTimesSeen == 1)
+		{
+			return  4;
+		}
+		else {
+			return 0;
+		}
+	//	countOfSymbolsToAdd += checkHowMuchSymbolsToAdd(currentLetters, count, line);
+
 	}
-	if ((countToAdd == 2) && numberTimesSeen == 2)
+	else
 	{
-		return 2;
-	}else if ((countToAdd == 2) && numberTimesSeen == 1)
-	{
-		return 0;
+		return countToAdd;
 	}
-	else if ((countToAdd == 4) && numberTimesSeen == 2)
-	{
-		return 0;
-	}
-	else if ((countToAdd == 4) && numberTimesSeen == 1)
-	{
-		return  4;
-	}
-	else {
-		return 0;
-	}
+	
 
 	
 }
@@ -233,6 +245,11 @@ void Line::checkAndAddSymbols(char* temporary, unsigned &i, unsigned &j, unsigne
 			if (line[j] == ' ')
 			{
 				wordCurrent += 1;
+				temporary[i++] = line[j++];
+				while (line[j] == ' ')
+				{
+					temporary[i++] = line[j++];
+				}
 				
 			}
 			else
@@ -241,12 +258,9 @@ void Line::checkAndAddSymbols(char* temporary, unsigned &i, unsigned &j, unsigne
 			}
 
 		}
-	/*	while (line[j] == ' ')
-		{
-			temporary[i++] = line[j++];
-		}
-*/
+	 
 	}
+
 	for (unsigned countOfLine = j, countOfTemp = i; countOfLine <(this->lettersCount - numberOfSymbolsToAdd); ++countOfLine)
 	{
 		temporary[countOfTemp++] = line[countOfLine];
@@ -264,41 +278,68 @@ void Line::checkAndAddSymbols(char* temporary, unsigned &i, unsigned &j, unsigne
 ///
 unsigned Line::countToAdd(unsigned from, unsigned to, unsigned count)
 {
+	
 	unsigned currentLetters = 0;
 	unsigned countOfSymbolsToAdd = 0;
 	unsigned wordCurrent = 0;
+	///Escaping first letters
+	if (line[currentLetters] != '#' && line[currentLetters] != ' ')
+	{
+		++wordCurrent;
+		if (from==wordCurrent)
+		{
+			countOfSymbolsToAdd += checkHowMuchSymbolsToAdd(currentLetters, count, line);
+			++from;
+			++wordCurrent;
+		}
+		else
+		{
+			while (line[currentLetters] != ' ')
+			{
+				currentLetters++;
+			}
+		}
+	}
 	while (from <= to)
 	{
-		if (line[currentLetters]=='#' || line[currentLetters] ==' ')
-		{
-			currentLetters++;
-			if (currentLetters>lettersCount)
-			{
-				break;
-			}
-			continue;
-		}
-		++wordCurrent;
+		///checking if had occurence
 		if (from == wordCurrent)
 		{
-			if (line[currentLetters] == '*')
-			{
-				int numberTimesSeen = 0;
-				++numberTimesSeen;
-				countOfSymbolsToAdd += checkHowMuchSymbolsToAdd(currentLetters, count, line);
-				
-			}
-			else
-			{
-				countOfSymbolsToAdd += count;
-			}
-			from += 1;
+			countOfSymbolsToAdd += checkHowMuchSymbolsToAdd(currentLetters, count, line);
+			++from;
+			++wordCurrent;
 			while (line[currentLetters] != ' ' && currentLetters<lettersCount)
 			{
 				currentLetters++;
 			}
 			currentLetters += 1;
+			continue;
 		}
+		else
+		{
+			while (line[currentLetters] != ' ' && currentLetters<lettersCount)
+			{
+				currentLetters++;
+			}
+		}
+
+		if (line[currentLetters]=='#' || line[currentLetters] ==' ')
+		{
+			currentLetters++;
+			while (line[currentLetters] == '#' || line[currentLetters] == ' ')
+			{
+				++currentLetters;
+			}
+			if (currentLetters>lettersCount)
+			{
+				break;
+			}			
+			++wordCurrent;
+
+			continue;
+		}
+		
+	
 		
 	}
 	return countOfSymbolsToAdd;
